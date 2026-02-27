@@ -4,6 +4,8 @@
 ;;
 ;; Author: Charlie Holland
 ;; URL: https://github.com/chiply/magneto
+;; Version: 0.1.0
+;; Package-Requires: ((emacs "29.1") (magneto "0.1.0") (embark "1.0"))
 ;; Keywords: convenience, windows
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
@@ -35,12 +37,11 @@
 
 (require 'magneto)
 (require 'embark)
-(require 'seq)
 
 (defun magneto-embark--make-action (keymap action key-sequence)
   "Create a magneto-routed embark action and bind it in KEYMAP.
 ACTION is the embark action symbol.  KEY-SEQUENCE is the key to bind
-under the \"s-o\" prefix in KEYMAP."
+under a prefix in KEYMAP."
   (let ((function-name (intern (concat "magneto-embark--" (symbol-name action)))))
     `(progn
        (defun ,function-name ()

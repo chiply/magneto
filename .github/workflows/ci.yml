@@ -48,6 +48,17 @@ jobs:
           path: .eask
           key: eask-${{ runner.os }}-${{ matrix.emacs-version }}-${{ hashFiles('Eask') }}
 
+      - name: Install repeatable-lite (pre-MELPA)
+        shell: bash
+        run: |
+          git clone --depth 1 https://github.com/chiply/repeatable-lite.git /tmp/rl
+          VER=$(emacs --batch --eval '(princ emacs-version)' 2>/dev/null)
+          D=".eask/$VER/elpa/repeatable-lite-0.1.3"
+          mkdir -p "$D"
+          cp /tmp/rl/repeatable-lite.el "$D/"
+          printf '(define-package "repeatable-lite" "0.1.3" "Repeatable prefix commands" '\''((emacs "29.1") (which-key "3.5.0")))\n' > "$D/repeatable-lite-pkg.el"
+          emacs --batch --eval "(progn (require 'package) (package-generate-autoloads \"repeatable-lite\" \"$(pwd)/$D\"))" 2>/dev/null
+
       - name: Install dependencies
         shell: bash
         run: |
@@ -83,6 +94,17 @@ jobs:
         with:
           path: .eask
           key: eask-lint-${{ hashFiles('Eask') }}
+
+      - name: Install repeatable-lite (pre-MELPA)
+        shell: bash
+        run: |
+          git clone --depth 1 https://github.com/chiply/repeatable-lite.git /tmp/rl
+          VER=$(emacs --batch --eval '(princ emacs-version)' 2>/dev/null)
+          D=".eask/$VER/elpa/repeatable-lite-0.1.3"
+          mkdir -p "$D"
+          cp /tmp/rl/repeatable-lite.el "$D/"
+          printf '(define-package "repeatable-lite" "0.1.3" "Repeatable prefix commands" '\''((emacs "29.1") (which-key "3.5.0")))\n' > "$D/repeatable-lite-pkg.el"
+          emacs --batch --eval "(progn (require 'package) (package-generate-autoloads \"repeatable-lite\" \"$(pwd)/$D\"))" 2>/dev/null
 
       - name: Install dependencies
         shell: bash

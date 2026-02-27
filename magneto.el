@@ -81,7 +81,7 @@ or \"find-file\"."
   :group 'magneto)
 
 (defcustom magneto-default-destination-window nil
-  "Default pre-selected destination window, or nil for ace-window prompt."
+  "Default pre-selected destination window, or nil for `ace-window' prompt."
   :type '(choice (const nil) window)
   :group 'magneto)
 
@@ -162,7 +162,7 @@ DISPLAY-FN and CLEANUP-FN are passed to avy for overlay management."
               (funcall avy-handler-function char))))))))
 
 (defun magneto-ace-get-window (initial-input)
-  "Select a window using ace-window with INITIAL-INPUT as the first key."
+  "Select a window using `ace-window' with INITIAL-INPUT as the first key."
   (interactive)
   (let* ((wnd-list (aw-window-list))
          (candidate-list
@@ -198,7 +198,7 @@ DISPLAY-FN and CLEANUP-FN are passed to avy for overlay management."
   (setq magneto-action-action setting))
 
 (defun magneto--set-destination-window (setting)
-  "Pre-select a destination window using ace-window with SETTING as input."
+  "Pre-select a destination window using `ace-window' with SETTING as input."
   (interactive)
   (setq magneto-destination-window (magneto-ace-get-window setting)))
 
@@ -249,7 +249,7 @@ DISPLAY-FN and CLEANUP-FN are passed to avy for overlay management."
   (selected-window))
 
 (defun magneto-select-win-dest-ace (buf-orig)
-  "Select destination window via ace-window, then apply action on BUF-ORIG."
+  "Select destination window via `ace-window', then apply action on BUF-ORIG."
   (if magneto-destination-window
       (progn
         (select-window magneto-destination-window)

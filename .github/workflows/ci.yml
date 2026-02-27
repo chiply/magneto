@@ -56,7 +56,7 @@ jobs:
           D=".eask/$VER/elpa/repeatable-lite-0.1.3"
           mkdir -p "$D"
           cp /tmp/rl/repeatable-lite.el "$D/"
-          printf '(define-package "repeatable-lite" "0.1.3" "Repeatable prefix commands" '\''((emacs "29.1") (which-key "3.5.0")))\n' > "$D/repeatable-lite-pkg.el"
+          printf '(define-package "repeatable-lite" "0.1.3" "Repeatable prefix commands" '\''((emacs "29.1")))\n' > "$D/repeatable-lite-pkg.el"
           emacs --batch --eval "(progn (require 'package) (package-generate-autoloads \"repeatable-lite\" \"$D\"))" 2>/dev/null || true
 
       - name: Install dependencies
@@ -103,7 +103,7 @@ jobs:
           D=".eask/$VER/elpa/repeatable-lite-0.1.3"
           mkdir -p "$D"
           cp /tmp/rl/repeatable-lite.el "$D/"
-          printf '(define-package "repeatable-lite" "0.1.3" "Repeatable prefix commands" '\''((emacs "29.1") (which-key "3.5.0")))\n' > "$D/repeatable-lite-pkg.el"
+          printf '(define-package "repeatable-lite" "0.1.3" "Repeatable prefix commands" '\''((emacs "29.1")))\n' > "$D/repeatable-lite-pkg.el"
           emacs --batch --eval "(progn (require 'package) (package-generate-autoloads \"repeatable-lite\" \"$D\"))" 2>/dev/null || true
 
       - name: Install dependencies

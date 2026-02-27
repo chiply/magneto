@@ -5,7 +5,7 @@
 ;; Author: Charlie Holland
 ;; URL: https://github.com/chiply/magneto
 ;; Keywords: convenience, windows
-;; Package-Requires: ((emacs "29.1") (avy "0.5.0") (ace-window "0.10.0") (repeatable-lite "0.1.0"))
+;; Package-Requires: ((emacs "29.1") (avy "0.5.0") (ace-window "0.10.0") (repeatable-lite "0.1.0") (which-key "3.5.0"))
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;; x-release-please-start-version

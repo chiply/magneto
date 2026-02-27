@@ -16,7 +16,7 @@ you press keys to set each parameter and then execute with RET.
 ```elisp
 (use-package magneto
   :ensure (:host github :repo "chiply/magneto")
-  :bind ("s-m" . magneto-map))
+  :bind ("s-m" . magneto-compose))
 ```
 
 ### Manual
@@ -24,12 +24,13 @@ you press keys to set each parameter and then execute with RET.
 ```elisp
 (add-to-list 'load-path "/path/to/magneto")
 (require 'magneto)
-(global-set-key (kbd "s-m") 'magneto-map)
+(global-set-key (kbd "s-m") #'magneto-compose)
 ```
 
 ## Usage
 
-Bind `magneto-map` to a key (e.g. `s-m`), then compose an operation:
+Bind `magneto-compose` to a key (e.g. `s-m`), then compose an operation.
+The invoking key doubles as the execute key (same key to enter and exit):
 
 | Key       | Action                              |
 |-----------|-------------------------------------|
@@ -52,7 +53,7 @@ Bind `magneto-map` to a key (e.g. `s-m`), then compose an operation:
 | `a/s/d`   | Pre-select destination window        |
 | `RET`     | **Execute** composed operation       |
 
-Keys are repeatable (via repeatable-lite) — press multiple source or
+Keys stay active while composing — press multiple source or
 destination keys to change your mind before committing with RET.
 
 ## Options
@@ -87,7 +88,6 @@ consult-bookmark, goto-grep) under `s-o` in each embark keymap.
 - Emacs 29.1+
 - [avy](https://github.com/abo-abo/avy)
 - [ace-window](https://github.com/abo-abo/ace-window)
-- [repeatable-lite](https://github.com/chiply/repeatable-lite)
 
 ## License
 

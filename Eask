@@ -13,8 +13,6 @@
 (depends-on "emacs" "29.1")
 (depends-on "avy" "0.5.0")
 (depends-on "ace-window" "0.10.0")
-(depends-on "repeatable-lite" "0.1.0")
-(depends-on "which-key" "3.5.0")  ; transitive dep of repeatable-lite, built-in on 30+
 (development
  (depends-on "embark")
  (depends-on "package-lint")

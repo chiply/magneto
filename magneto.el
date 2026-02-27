@@ -5,7 +5,7 @@
 ;; Author: Charlie Holland
 ;; URL: https://github.com/chiply/magneto
 ;; Keywords: convenience, windows
-;; Package-Requires: ((emacs "29.1") (avy "0.5.0") (ace-window "0.10.0") (repeatable-lite "0.1.0") (which-key "3.5.0"))
+;; Package-Requires: ((emacs "29.1") (avy "0.5.0") (ace-window "0.10.0"))
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;; x-release-please-start-version
@@ -33,19 +33,19 @@
 ;; and cursor placement, then execute them all with RET.
 ;;
 ;; Usage:
-;;   Bind `magneto-map' to a key, then press keys to compose:
+;;   Bind `magneto-compose' to a key (e.g. s-m), then press keys:
 ;;     m/c/p   - source: move, copy, pull
 ;;     v/V/h/H - destination: split vertical/horizontal
 ;;     t/b/l/r - destination: side windows (top/bottom/left/right)
 ;;     o/O     - cursor: follow destination / stay at origin
 ;;     w/x/f   - action: switch-buffer, execute-command, find-file
 ;;     RET     - execute the composed action
+;;   The invoking key also executes (same key to enter and exit).
 
 ;;; Code:
 
 (require 'avy)
 (require 'ace-window)
-(require 'repeatable-lite)
 
 ;;; Customization
 
@@ -123,6 +123,9 @@ Set to `consult-buffer' if you use consult."
 
 (defvar magneto-embark-action nil
   "Current embark action function, or nil.")
+
+(defvar magneto--composing nil
+  "Non-nil while in magneto compose mode.")
 
 ;;; Internal functions
 
@@ -299,11 +302,12 @@ DISPLAY-FN and CLEANUP-FN are passed to avy for overlay management."
    ((string= magneto-select-action "O") (select-window win-orig))))
 
 ;;;###autoload
-(defun magneto-move (&optional _repeat)
+(defun magneto-move ()
   "Execute the composed magneto window operation.
 Moves/copies/pulls the current buffer to the selected destination,
 then restores defaults."
   (interactive)
+  (setq magneto--composing nil)
   (let* ((buf-orig (current-buffer))
          (win-orig (selected-window))
          (win-dest (magneto-select-win-dest buf-orig)))
@@ -313,48 +317,61 @@ then restores defaults."
 
 ;;; Keymap
 
-(defvar magneto-map nil
+(defvar magneto-map (make-sparse-keymap)
   "Keymap for composing magneto window operations.")
-
-;;;###autoload
-(define-prefix-command 'magneto-map)
 
 (define-key magneto-map (kbd "<return>") #'magneto-move)
 
 ;; Source actions
-(define-key magneto-map (kbd "m") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-source-action "move"))))
-(define-key magneto-map (kbd "c") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-source-action "copy"))))
-(define-key magneto-map (kbd "p") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-source-action "pull"))))
+(define-key magneto-map (kbd "m") (lambda () (interactive) (magneto--set-source-action "move")))
+(define-key magneto-map (kbd "c") (lambda () (interactive) (magneto--set-source-action "copy")))
+(define-key magneto-map (kbd "p") (lambda () (interactive) (magneto--set-source-action "pull")))
 
 ;; Destination actions
-(define-key magneto-map (kbd "0") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-destination-action "f"))))
-(define-key magneto-map (kbd "h") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-destination-action "h"))))
-(define-key magneto-map (kbd "H") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-destination-action "H"))))
-(define-key magneto-map (kbd "v") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-destination-action "v"))))
-(define-key magneto-map (kbd "V") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-destination-action "V"))))
-(define-key magneto-map (kbd "t") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-destination-action "t"))))
-(define-key magneto-map (kbd "T") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-destination-action "T"))))
-(define-key magneto-map (kbd "b") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-destination-action "b"))))
-(define-key magneto-map (kbd "B") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-destination-action "B"))))
-(define-key magneto-map (kbd "l") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-destination-action "l"))))
-(define-key magneto-map (kbd "L") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-destination-action "L"))))
-(define-key magneto-map (kbd "r") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-destination-action "r"))))
-(define-key magneto-map (kbd "R") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-destination-action "R"))))
+(define-key magneto-map (kbd "0") (lambda () (interactive) (magneto--set-destination-action "f")))
+(define-key magneto-map (kbd "h") (lambda () (interactive) (magneto--set-destination-action "h")))
+(define-key magneto-map (kbd "H") (lambda () (interactive) (magneto--set-destination-action "H")))
+(define-key magneto-map (kbd "v") (lambda () (interactive) (magneto--set-destination-action "v")))
+(define-key magneto-map (kbd "V") (lambda () (interactive) (magneto--set-destination-action "V")))
+(define-key magneto-map (kbd "t") (lambda () (interactive) (magneto--set-destination-action "t")))
+(define-key magneto-map (kbd "T") (lambda () (interactive) (magneto--set-destination-action "T")))
+(define-key magneto-map (kbd "b") (lambda () (interactive) (magneto--set-destination-action "b")))
+(define-key magneto-map (kbd "B") (lambda () (interactive) (magneto--set-destination-action "B")))
+(define-key magneto-map (kbd "l") (lambda () (interactive) (magneto--set-destination-action "l")))
+(define-key magneto-map (kbd "L") (lambda () (interactive) (magneto--set-destination-action "L")))
+(define-key magneto-map (kbd "r") (lambda () (interactive) (magneto--set-destination-action "r")))
+(define-key magneto-map (kbd "R") (lambda () (interactive) (magneto--set-destination-action "R")))
 
 ;; Select actions (cursor placement)
-(define-key magneto-map (kbd "o") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-select-action "o"))))
-(define-key magneto-map (kbd "O") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-select-action "O"))))
+(define-key magneto-map (kbd "o") (lambda () (interactive) (magneto--set-select-action "o")))
+(define-key magneto-map (kbd "O") (lambda () (interactive) (magneto--set-select-action "O")))
 
 ;; Buffer actions
-(define-key magneto-map (kbd "w") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-action-action "consult-buffer"))))
-(define-key magneto-map (kbd "x") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-action-action "execute-command"))))
-(define-key magneto-map (kbd "f") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-action-action "find-file"))))
-(define-key magneto-map (kbd "C-b") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-action-action "switch-buffer"))))
+(define-key magneto-map (kbd "w") (lambda () (interactive) (magneto--set-action-action "consult-buffer")))
+(define-key magneto-map (kbd "x") (lambda () (interactive) (magneto--set-action-action "execute-command")))
+(define-key magneto-map (kbd "f") (lambda () (interactive) (magneto--set-action-action "find-file")))
+(define-key magneto-map (kbd "C-b") (lambda () (interactive) (magneto--set-action-action "switch-buffer")))
 
 ;; Pre-select destination window (ace keys a/s/d)
-(define-key magneto-map (kbd "a") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-destination-window "a"))))
-(define-key magneto-map (kbd "s") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-destination-window "s"))))
-(define-key magneto-map (kbd "d") (repeatable-lite-wrap (lambda () (interactive) (magneto--set-destination-window "d"))))
+(define-key magneto-map (kbd "a") (lambda () (interactive) (magneto--set-destination-window "a")))
+(define-key magneto-map (kbd "s") (lambda () (interactive) (magneto--set-destination-window "s")))
+(define-key magneto-map (kbd "d") (lambda () (interactive) (magneto--set-destination-window "d")))
+
+;;;###autoload
+(defun magneto-compose ()
+  "Enter magneto compose mode.
+Activates `magneto-map' as a transient keymap.  Press keys to set
+source, destination, cursor, and buffer action, then RET or the
+invoking key to execute."
+  (interactive)
+  (magneto-restore-defaults)
+  (setq magneto--composing t)
+  (set-transient-map
+   (let ((map (make-composed-keymap nil magneto-map))
+         (keys (this-command-keys-vector)))
+     (define-key map keys #'magneto-move)
+     map)
+   (lambda () magneto--composing)))
 
 (provide 'magneto)
 ;;; magneto.el ends here

@@ -148,5 +148,23 @@
   "`magneto-move' should be an interactive command."
   (should (commandp #'magneto-move)))
 
+;;; Compose mode
+
+(ert-deftest magneto-test-magneto-compose-interactive ()
+  "`magneto-compose' should be an interactive command."
+  (should (commandp #'magneto-compose)))
+
+(ert-deftest magneto-test-composing-starts-nil ()
+  "`magneto--composing' should be nil by default."
+  (should (null magneto--composing)))
+
+(ert-deftest magneto-test-magneto-move-clears-composing ()
+  "`magneto-move' should clear `magneto--composing'."
+  (setq magneto--composing t)
+  (condition-case nil
+      (magneto-move)
+    (error nil))
+  (should (null magneto--composing)))
+
 (provide 'magneto-test)
 ;;; magneto-test.el ends here

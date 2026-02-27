@@ -92,7 +92,6 @@ jobs:
 
       - name: Package lint
         run: eask lint package
-        continue-on-error: true
 
       - name: Checkdoc
         run: eask lint checkdoc

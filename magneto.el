@@ -127,6 +127,9 @@ Set to `consult-buffer' if you use consult."
 (defvar magneto--composing nil
   "Non-nil while in magneto compose mode.")
 
+(defvar magneto--exit-compose nil
+  "Exit function for the current compose transient map.")
+
 ;;; Internal functions
 
 (defun magneto-avy-read (initial-input tree display-fn cleanup-fn)
@@ -178,6 +181,14 @@ DISPLAY-FN and CLEANUP-FN are passed to avy for overlay management."
                                          (lambda (_path _leaf))
                                        aw--lead-overlay-fn)
                                      aw--remove-leading-chars-fn))))
+    ;; aw--lead-overlay moves point and hscroll when face-rel-height > 1,
+    ;; saving originals for aw--done to restore.  Since we bypass aw--done,
+    ;; restore them here.
+    (aw--restore-windows-hscroll)
+    (let (c)
+      (while (setq c (pop aw--windows-points))
+        (with-selected-window (car c)
+          (goto-char (cdr c)))))
     win))
 
 (defun magneto--set-source-action (setting)
@@ -308,6 +319,9 @@ Moves/copies/pulls the current buffer to the selected destination,
 then restores defaults."
   (interactive)
   (setq magneto--composing nil)
+  (when magneto--exit-compose
+    (funcall magneto--exit-compose)
+    (setq magneto--exit-compose nil))
   (let* ((buf-orig (current-buffer))
          (win-orig (selected-window))
          (win-dest (magneto-select-win-dest buf-orig)))
@@ -366,12 +380,13 @@ invoking key to execute."
   (interactive)
   (magneto-restore-defaults)
   (setq magneto--composing t)
-  (set-transient-map
-   (let ((map (make-composed-keymap nil magneto-map))
-         (keys (this-command-keys-vector)))
-     (define-key map keys #'magneto-move)
-     map)
-   (lambda () magneto--composing)))
+  (setq magneto--exit-compose
+        (set-transient-map
+         (let ((map (make-composed-keymap nil magneto-map))
+               (keys (this-command-keys-vector)))
+           (define-key map keys #'magneto-move)
+           map)
+         t)))
 
 (provide 'magneto)
 ;;; magneto.el ends here

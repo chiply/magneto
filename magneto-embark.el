@@ -5,7 +5,6 @@
 ;; Author: Charlie Holland
 ;; URL: https://github.com/chiply/magneto
 ;; Version: 0.1.0
-;; Package-Requires: ((emacs "29.1") (magneto "0.1.0") (embark "1.0"))
 ;; Keywords: convenience, windows
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 

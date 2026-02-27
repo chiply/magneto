@@ -9,7 +9,7 @@
 ;; SPDX-License-Identifier: GPL-3.0-or-later
 
 ;; x-release-please-start-version
-;; Version: 0.1.0
+;; Version: 0.1.1
 ;; x-release-please-end
 
 ;; This program is free software: you can redistribute it and/or modify

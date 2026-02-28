@@ -386,7 +386,7 @@ invoking key to execute."
                (keys (this-command-keys-vector)))
            (define-key map keys #'magneto-move)
            map)
-         t)))
+         (lambda () magneto--composing))))
 
 (provide 'magneto)
 ;;; magneto.el ends here

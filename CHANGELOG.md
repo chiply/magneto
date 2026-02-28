@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.2](https://github.com/chiply/magneto/compare/v0.1.1...v0.1.2) (2026-02-28)
+
+
+### Bug Fixes
+
+* deactivate compose transient map when RET executes movement ([f40669f](https://github.com/chiply/magneto/commit/f40669f847788de164ffb09b79e6d8c94f2e5242))
+* restore cursor position after ace-window pre-selection ([a04d6ff](https://github.com/chiply/magneto/commit/a04d6ff799fda05abb2e7e3253d019e8a3b42778))
+
 ## [0.1.1](https://github.com/chiply/magneto/compare/v0.1.0...v0.1.1) (2026-02-27)
 
 

@@ -1,17 +1,19 @@
 ;;; magneto.el --- Composable window management -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2026  Charlie Holland
-;;
-;; Author: Charlie Holland
-;; URL: https://github.com/chiply/magneto
-;; Keywords: convenience, windows
-;; Package-Requires: ((emacs "29.1") (avy "0.5.0") (ace-window "0.10.0"))
-;; SPDX-License-Identifier: GPL-3.0-or-later
+;; Copyright (C) 2026 Charlie Holland
 
+;; Author: Charlie Holland <mister.chiply@gmail.com>
+;; Maintainer: Charlie Holland <mister.chiply@gmail.com>
+;; URL: https://github.com/chiply/magneto
 ;; x-release-please-start-version
 ;; Version: 0.1.2
 ;; x-release-please-end
-
+;; Package-Requires: ((emacs "29.1") (avy "0.5.0") (ace-window "0.10.0"))
+;; Keywords: convenience, windows
+;; SPDX-License-Identifier: GPL-3.0-or-later
+;;
+;; This file is not part of GNU Emacs.
+;;
 ;; This program is free software: you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
 ;; the Free Software Foundation, either version 3 of the License, or

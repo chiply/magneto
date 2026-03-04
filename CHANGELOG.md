@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.3](https://github.com/chiply/magneto/compare/v0.1.2...v0.1.3) (2026-03-04)
+
+
+### Bug Fixes
+
+* install Nix before magic-nix-cache-action in CI ([aa2c2d3](https://github.com/chiply/magneto/commit/aa2c2d3b3e1047b886910d5fb55cf08cd1f76b19))
+
 ## [0.1.2](https://github.com/chiply/magneto/compare/v0.1.1...v0.1.2) (2026-02-28)
 
 

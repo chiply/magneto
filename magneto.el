@@ -6,7 +6,7 @@
 ;; Maintainer: Charlie Holland <mister.chiply@gmail.com>
 ;; URL: https://github.com/chiply/magneto
 ;; x-release-please-start-version
-;; Version: 0.1.2
+;; Version: 0.1.3
 ;; x-release-please-end
 ;; Package-Requires: ((emacs "29.1") (avy "0.5.0") (ace-window "0.10.0"))
 ;; Keywords: convenience, windows

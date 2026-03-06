@@ -36,10 +36,13 @@
 ;;
 ;; Usage:
 ;;   Bind `magneto-compose' to a key (e.g. s-m), then press keys:
-;;     m/c/p   - source: move, copy, pull
+;;     m/c/p/S - source: move, copy, pull, swap
 ;;     v/V/h/H - destination: split vertical/horizontal
 ;;     t/b/l/r - destination: side windows (top/bottom/left/right)
+;;     F       - destination: new frame
 ;;     o/O     - cursor: follow destination / stay at origin
+;;     i       - modifier: toggle indirect buffer clone
+;;     D       - modifier: toggle dedicated window
 ;;     w/x/f   - action: switch-buffer, execute-command, find-file
 ;;     RET     - execute the composed action
 ;;   The invoking key also executes (same key to enter and exit).
@@ -128,6 +131,15 @@ Set to `consult-buffer' if you use consult."
 
 (defvar magneto--buffer-override nil
   "When non-nil, buffer to place instead of current-buffer in `magneto-move'.")
+
+(defvar magneto--dest-orig-buffer nil
+  "Buffer that was in the destination window before the magneto action.")
+
+(defvar magneto-indirect nil
+  "When non-nil, send an indirect buffer clone to the destination.")
+
+(defvar magneto-dedicated nil
+  "When non-nil, mark the destination window as dedicated after placement.")
 
 (defvar magneto--composing nil
   "Non-nil while in magneto compose mode.")
@@ -233,7 +245,10 @@ DISPLAY-FN and CLEANUP-FN are passed to avy for overlay management."
         magneto-destination-window magneto-default-destination-window
         magneto-embark-candidate magneto-default-embark-candidate
         magneto-embark-action magneto-default-embark-action
-        magneto--buffer-override nil))
+        magneto--buffer-override nil
+        magneto--dest-orig-buffer nil
+        magneto-indirect nil
+        magneto-dedicated nil))
 
 ;; Initialize state from defaults
 (magneto-restore-defaults)
@@ -250,10 +265,12 @@ DISPLAY-FN and CLEANUP-FN are passed to avy for overlay management."
   "Apply destination split and buffer action with BUF-ORIG as the source buffer."
   (cond
    ((string= magneto-destination-action "f") nil)
+   ((string= magneto-destination-action "F") nil)
    ((string= magneto-destination-action "V") (split-window))
    ((string= magneto-destination-action "v") (split-window) (windmove-down))
    ((string= magneto-destination-action "H") (split-window-horizontally))
    ((string= magneto-destination-action "h") (split-window-horizontally) (windmove-right)))
+  (setq magneto--dest-orig-buffer (current-buffer))
   (cond
    (magneto-embark-action (if magneto-embark-candidate
                               (funcall magneto-embark-action magneto-embark-candidate)
@@ -297,11 +314,19 @@ DISPLAY-FN and CLEANUP-FN are passed to avy for overlay management."
        (slot . ,slot)
        (window-parameters . ((no-delete-other-windows . 1)))))))
 
+(defun magneto-select-win-dest-frame (buf-orig)
+  "Create a new frame and apply buffer action with BUF-ORIG."
+  (let ((frame (make-frame)))
+    (select-frame-set-input-focus frame)
+    (magneto-move-after-select buf-orig)))
+
 (defun magneto-select-win-dest (buf-orig)
   "Route BUF-ORIG to the appropriate destination handler."
   (cond
    ((member magneto-destination-action '("f" "V" "v" "H" "h"))
     (magneto-select-win-dest-ace buf-orig))
+   ((string= magneto-destination-action "F")
+    (magneto-select-win-dest-frame buf-orig))
    ((member magneto-destination-action '("t" "T" "b" "B" "r" "R" "l" "L"))
     (magneto-select-win-dest-side buf-orig))))
 
@@ -310,7 +335,11 @@ DISPLAY-FN and CLEANUP-FN are passed to avy for overlay management."
   (cond
    ((string= magneto-source-action "move") (delete-window win-orig))
    ((string= magneto-source-action "pull") (switch-to-prev-buffer win-orig))
-   ((string= magneto-source-action "copy") nil)))
+   ((string= magneto-source-action "copy") nil)
+   ((string= magneto-source-action "swap")
+    (when magneto--dest-orig-buffer
+      (with-selected-window win-orig
+        (switch-to-buffer magneto--dest-orig-buffer))))))
 
 (defun magneto-process-select (win-orig win-dest)
   "Place cursor in WIN-ORIG or WIN-DEST based on `magneto-select-action'."
@@ -328,11 +357,18 @@ then restores defaults."
   (when magneto--exit-compose
     (funcall magneto--exit-compose)
     (setq magneto--exit-compose nil))
-  (let* ((buf-orig (or magneto--buffer-override (current-buffer)))
+  (let* ((buf-raw (or magneto--buffer-override (current-buffer)))
+         (buf-orig (if magneto-indirect
+                       (with-current-buffer buf-raw
+                         (clone-indirect-buffer
+                          (format "*indirect--%s*" (buffer-name)) nil))
+                     buf-raw))
          (win-orig (selected-window))
          (win-dest (magneto-select-win-dest buf-orig)))
     (magneto-process-source win-orig)
-    (magneto-process-select win-orig win-dest))
+    (magneto-process-select win-orig win-dest)
+    (when (and magneto-dedicated win-dest)
+      (set-window-dedicated-p win-dest t)))
   (magneto-restore-defaults))
 
 ;;; Keymap
@@ -346,6 +382,7 @@ then restores defaults."
 (define-key magneto-map (kbd "m") (lambda () (interactive) (magneto--set-source-action "move")))
 (define-key magneto-map (kbd "c") (lambda () (interactive) (magneto--set-source-action "copy")))
 (define-key magneto-map (kbd "p") (lambda () (interactive) (magneto--set-source-action "pull")))
+(define-key magneto-map (kbd "S") (lambda () (interactive) (magneto--set-source-action "swap")))
 
 ;; Destination actions
 (define-key magneto-map (kbd "0") (lambda () (interactive) (magneto--set-destination-action "f")))
@@ -361,10 +398,15 @@ then restores defaults."
 (define-key magneto-map (kbd "L") (lambda () (interactive) (magneto--set-destination-action "L")))
 (define-key magneto-map (kbd "r") (lambda () (interactive) (magneto--set-destination-action "r")))
 (define-key magneto-map (kbd "R") (lambda () (interactive) (magneto--set-destination-action "R")))
+(define-key magneto-map (kbd "F") (lambda () (interactive) (magneto--set-destination-action "F")))
 
 ;; Select actions (cursor placement)
 (define-key magneto-map (kbd "o") (lambda () (interactive) (magneto--set-select-action "o")))
 (define-key magneto-map (kbd "O") (lambda () (interactive) (magneto--set-select-action "O")))
+
+;; Modifiers
+(define-key magneto-map (kbd "i") (lambda () (interactive) (setq magneto-indirect (not magneto-indirect))))
+(define-key magneto-map (kbd "D") (lambda () (interactive) (setq magneto-dedicated (not magneto-dedicated))))
 
 ;; Buffer actions
 (define-key magneto-map (kbd "w") (lambda () (interactive) (magneto--set-action-action "consult-buffer")))

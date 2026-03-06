@@ -1,7 +1,7 @@
 ; -*- lexical-binding: t -*-
 
 ; x-release-please-start-version
-(package "magneto" "0.1.3" "Composable window management")
+(package "magneto" "0.1.4" "Composable window management")
 ; x-release-please-end
 (website-url "https://github.com/chiply/magneto")
 (keywords "convenience" "windows")

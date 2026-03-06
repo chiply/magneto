@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.4](https://github.com/chiply/magneto/compare/v0.1.3...v0.1.4) (2026-03-06)
+
+
+### Features
+
+* add magneto-embark-collect and magneto-embark-export commands ([9e24ec2](https://github.com/chiply/magneto/commit/9e24ec2fa7976b3ba012a45d52d215d2496c60ba))
+* add swap source, new-frame dest, indirect and dedicated modifiers ([17c6d79](https://github.com/chiply/magneto/commit/17c6d7927eef2a6a1e28a3182b9b10a91431fd85))
+
 ## [0.1.3](https://github.com/chiply/magneto/compare/v0.1.2...v0.1.3) (2026-03-04)
 
 

@@ -50,11 +50,11 @@ under a prefix in KEYMAP."
          ,(format "Embark action `%s' routed through magneto." action)
          (interactive)
          (with-demoted-errors "%s"
-           (magneto-restore-defaults)
-           (magneto--set-source-action "copy")
-           (setq magneto-embark-candidate (read-from-minibuffer ""))
-           (setq magneto-embark-action ',action)
-           (magneto-move)))
+           (let ((candidate (read-from-minibuffer "")))
+             (magneto-compose)
+             (magneto--set-source-action "copy")
+             (setq magneto-embark-candidate candidate)
+             (setq magneto-embark-action ',action))))
        (condition-case nil
            (define-key ,keymap ,(kbd (concat "s-o " key-sequence)) ',function-name)
          (error (message ,(concat
@@ -63,11 +63,104 @@ under a prefix in KEYMAP."
                            (symbol-name function-name)
                            " didn't work")))))))
 
-(defun magneto-embark-export ()
-  "Export embark candidates then invoke `magneto-move'."
+;;; Collect / Export with magneto placement
+
+(defun magneto-embark--act-advice (orig-fn action target &optional quit)
+  "Advise `embark--act' to run magneto export/collect in the minibuffer.
+ORIG-FN is the original `embark--act'.  ACTION, TARGET, and QUIT are
+passed through.  This ensures our commands get the same treatment as
+`embark-export' and `embark-collect' (running in the current buffer
+without target injection)."
+  (if (memq action '(magneto-embark-export magneto-embark-collect))
+      (progn
+        (embark--run-action-hooks embark-pre-action-hooks action target quit)
+        (unwind-protect (embark--run-around-action-hooks action target quit)
+          (embark--run-action-hooks embark-post-action-hooks
+                                    action target quit)))
+    (funcall orig-fn action target quit)))
+
+(defun magneto-embark--start-compose-with-buffer (buffer)
+  "Enter magneto compose to place BUFFER at a user-chosen destination."
+  (magneto-compose)
+  (magneto--set-source-action "copy")
+  (setq magneto--buffer-override buffer
+        magneto-embark-candidate nil
+        magneto-embark-action (lambda () (switch-to-buffer buffer))))
+
+(defun magneto-embark--collect-no-display (buffer-name)
+  "Create an Embark Collect buffer named BUFFER-NAME without displaying it.
+Like `embark--collect' but skips `display-buffer', running mode hooks
+directly in the buffer instead."
+  (let ((buffer (generate-new-buffer buffer-name))
+        (rerun (embark--rerun-function #'embark-collect)))
+    (with-current-buffer buffer
+      (delay-mode-hooks (embark-collect-mode)))
+    (embark--cache-info buffer)
+    (unless (embark-collect--update-candidates buffer)
+      (user-error "No candidates to collect"))
+    (with-current-buffer buffer
+      (setq tabulated-list-use-header-line nil
+            header-line-format nil
+            tabulated-list--header-string nil)
+      (setq embark--rerun-function rerun)
+      (run-mode-hooks)
+      (tabulated-list-revert))
+    buffer))
+
+;;;###autoload
+(defun magneto-embark-collect ()
+  "Collect embark candidates and place the buffer via magneto compose.
+Like `embark-collect' but instead of displaying the buffer immediately,
+enters magneto compose mode so you can choose a destination window."
   (interactive)
-  (call-interactively #'embark-export)
-  (magneto-move))
+  (let ((buffer (magneto-embark--collect-no-display
+                 (embark--descriptive-buffer-name 'collect))))
+    (if (minibufferp)
+        (progn
+          (embark--run-after-command
+           #'magneto-embark--start-compose-with-buffer buffer)
+          (embark--quit-and-run #'message nil))
+      (magneto-embark--start-compose-with-buffer buffer))))
+
+;;;###autoload
+(defun magneto-embark-export ()
+  "Export embark candidates and place the buffer via magneto compose.
+Like `embark-export' but instead of displaying the buffer with
+`pop-to-buffer', enters magneto compose mode so you can choose a
+destination window."
+  (interactive)
+  (let* ((transformed (embark--maybe-transform-candidates))
+         (candidates (or (plist-get transformed :candidates)
+                         (user-error "No candidates for export")))
+         (type (plist-get transformed :type)))
+    (let ((exporter (or (alist-get type embark-exporters-alist)
+                        (alist-get t embark-exporters-alist))))
+      (if (eq exporter 'embark-collect)
+          (magneto-embark-collect)
+        (let* ((after embark-after-export-hook)
+               (cmd embark--command)
+               (name (embark--descriptive-buffer-name 'export))
+               (rerun (embark--rerun-function #'embark-export))
+               (buffer (save-excursion
+                         (funcall exporter candidates)
+                         (rename-buffer name t)
+                         (current-buffer))))
+          (embark--quit-and-run
+           (lambda ()
+             (set-buffer buffer)
+             (setq embark--rerun-function rerun)
+             (use-local-map
+              (make-composed-keymap
+               '(keymap
+                 (remap keymap
+                        (revert-buffer . embark-rerun-collect-or-export)))
+               (current-local-map)))
+             (let ((embark-after-export-hook after)
+                   (embark--command cmd))
+               (run-hooks 'embark-after-export-hook))
+             (magneto-embark--start-compose-with-buffer buffer))))))))
+
+;;; Keymap parsing and binding
 
 (defun magneto-embark--parse-keymap (keymap &optional prefix)
   "Parse KEYMAP into a list of (command key-string) entries.
@@ -94,7 +187,20 @@ PREFIX is prepended to key descriptions for nested keymaps."
                     (let ((name (symbol-name (car x))))
                       (and (or (string-match-p "find-file" name)
                                (string-match-p "consult-bookmark" name)
-                               (string-match-p "goto-grep" name))
+                               (string-match-p "goto-grep" name)
+                               (string-match-p "switch-to-buffer" name)
+                               (string-match-p "bookmark-jump" name)
+                               (string-match-p "find-library" name)
+                               (string-match-p "^eww" name)
+                               (string-match-p "embark-find-definition" name)
+                               (string-match-p "xref-find-definitions" name)
+                               (string-match-p "xref-find-references" name)
+                               (string-match-p "describe-symbol" name)
+                               (string-match-p "describe-package" name)
+                               (string-match-p "describe-face" name)
+                               (string-match-p "embark-dired-jump" name)
+                               (string-match-p "org-tree-to-indirect-buffer" name)
+                               (string-match-p "embark-vc-visit-pr" name))
                            (not (or (string-match-p "digit-arg" name)
                                     (string-match-p "magneto-embark" name)
                                     (string-match-p "embark-org-link-map" name))))))
@@ -111,7 +217,12 @@ Call this after embark has been loaded."
     (dolist (km embark-maps)
       (condition-case nil
           (magneto-embark--bind-keymap km)
-        (error nil)))))
+        (error nil))))
+  ;; Bind collect/export in the general map
+  (define-key embark-general-map (kbd "s-o E") #'magneto-embark-export)
+  (define-key embark-general-map (kbd "s-o S") #'magneto-embark-collect)
+  ;; Ensure embark--act treats our commands like embark-export/embark-collect
+  (advice-add 'embark--act :around #'magneto-embark--act-advice))
 
 (provide 'magneto-embark)
 ;;; magneto-embark.el ends here

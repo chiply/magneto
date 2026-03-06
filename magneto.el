@@ -126,6 +126,9 @@ Set to `consult-buffer' if you use consult."
 (defvar magneto-embark-action nil
   "Current embark action function, or nil.")
 
+(defvar magneto--buffer-override nil
+  "When non-nil, buffer to place instead of current-buffer in `magneto-move'.")
+
 (defvar magneto--composing nil
   "Non-nil while in magneto compose mode.")
 
@@ -229,7 +232,8 @@ DISPLAY-FN and CLEANUP-FN are passed to avy for overlay management."
         magneto-action-action magneto-default-action-action
         magneto-destination-window magneto-default-destination-window
         magneto-embark-candidate magneto-default-embark-candidate
-        magneto-embark-action magneto-default-embark-action))
+        magneto-embark-action magneto-default-embark-action
+        magneto--buffer-override nil))
 
 ;; Initialize state from defaults
 (magneto-restore-defaults)
@@ -324,7 +328,7 @@ then restores defaults."
   (when magneto--exit-compose
     (funcall magneto--exit-compose)
     (setq magneto--exit-compose nil))
-  (let* ((buf-orig (current-buffer))
+  (let* ((buf-orig (or magneto--buffer-override (current-buffer)))
          (win-orig (selected-window))
          (win-dest (magneto-select-win-dest buf-orig)))
     (magneto-process-source win-orig)
